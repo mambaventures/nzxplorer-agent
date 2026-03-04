@@ -83,7 +83,7 @@ Then ask a question.
 
 ## Tools
 
-The agent has 17 NZX-specific data tools routed via two meta-tools:
+The agent has 18 NZX-specific data tools routed via two meta-tools:
 
 ### `financial_search` — routes to all data tools
 - `get_companies` / `get_company_detail` — company info, board, description
@@ -103,6 +103,13 @@ The agent has 17 NZX-specific data tools routed via two meta-tools:
 ### `financial_metrics` — focused fundamental analysis
 Routes to financial statements and ratio tools specifically.
 
+### `get_rbnz_ocr` — RBNZ Official Cash Rate
+- Current OCR rate (2.25% as of 2026-02-19)
+- Full decision history (2020-2026, 32 decisions)
+- Staleness detection (auto-warns if scheduled decision date passes without update)
+- Next decision date tracking
+- Used as risk-free rate proxy for NZ DCF valuations
+
 ### Other tools
 - `web_search` — general web search (Exa/Perplexity/Tavily)
 - `web_fetch` — fetch and read web pages
@@ -117,7 +124,7 @@ Skills are SKILL.md-defined workflows the agent can invoke.
 Triggered by: "fair value", "intrinsic value", "DCF", "what is X worth", "price target"
 
 NZ-adapted:
-- Risk-free rate: RBNZ OCR (3.75%)
+- Risk-free rate: RBNZ OCR (live via `get_rbnz_ocr` — currently 2.25%)
 - NZ corporate tax rate: 28%
 - NZ equity risk premium: 5.5-6.5%
 - Governance risk premium from GRS score

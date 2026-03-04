@@ -6,9 +6,28 @@ import { formatToolResult } from '../types.js';
  * RBNZ Official Cash Rate (OCR) history.
  * Source: https://www.rbnz.govt.nz/monetary-policy/official-cash-rate-decisions
  *
- * Updated manually when OCR changes (~7 decisions/year, most are holds).
+ * HOW TO UPDATE:
+ * 1. RBNZ announces OCR decisions on scheduled dates (see UPCOMING_DECISIONS below)
+ * 2. After each announcement, add a new entry at the TOP of OCR_HISTORY
+ * 3. Update UPCOMING_DECISIONS to remove past dates and add newly announced ones
+ * 4. Run `bun test src/tools/finance/rbnz.test.ts` to verify
+ *
+ * The tool auto-detects staleness: if the most recent decision date has passed
+ * without an update, it flags the data as potentially stale.
+ *
  * Last updated: 2026-03-04
  */
+
+/** Scheduled RBNZ OCR decision dates (announced ~12 months ahead) */
+const UPCOMING_DECISIONS = [
+  '2026-04-09',
+  '2026-05-28',
+  '2026-07-09',
+  '2026-08-20',
+  '2026-10-08',
+  '2026-11-25',
+];
+
 const OCR_HISTORY: Array<{ date: string; rate: number; change: number; direction: string }> = [
   // 2025-2026 easing cycle
   { date: '2026-02-19', rate: 2.25, change: 0.00, direction: 'hold' },
@@ -79,18 +98,32 @@ Use this tool when you need:
   schema: RbnzInputSchema,
   func: async (input) => {
     const current = getCurrentOCR();
+    const today = new Date().toISOString().slice(0, 10);
+
+    // Find next upcoming decision
+    const nextDecision = UPCOMING_DECISIONS.find((d) => d > today);
+
+    // Check if a decision date has passed that we don't have data for
+    const pastUnrecorded = UPCOMING_DECISIONS.find(
+      (d) => d <= today && d > current.date
+    );
 
     const result: Record<string, unknown> = {
       current_ocr: current.rate,
       current_ocr_pct: `${current.rate}%`,
       last_decision_date: current.date,
       last_decision_direction: current.direction,
+      next_decision_date: nextDecision || 'unknown — update UPCOMING_DECISIONS',
       peak_this_cycle: 5.75,
       peak_date: '2023-05-24',
       trough_this_cycle: 0.25,
       trough_date: '2020-03-16',
       note: 'Use OCR as risk-free rate proxy for NZ DCF valuations. Add 5.5-6.5% NZ equity risk premium for cost of equity.',
     };
+
+    if (pastUnrecorded) {
+      result.stale_warning = `⚠️ An OCR decision was scheduled for ${pastUnrecorded} but this data has not been updated. The rate shown (${current.rate}%) may be outdated. Use web_search to verify the current OCR.`;
+    }
 
     if (input.include_history) {
       let history = OCR_HISTORY;
