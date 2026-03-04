@@ -58,6 +58,7 @@ import { getDividends } from './dividends.js';
 import { getEarnings } from './earnings.js';
 import { getCompanies, getCompanyDetail } from './companies.js';
 import { getDirectors, getDirectorDetail } from './directors.js';
+import { getRbnzOcr } from './rbnz.js';
 
 // All NZX tools available for routing
 const FINANCE_TOOLS: StructuredToolInterface[] = [
@@ -78,6 +79,7 @@ const FINANCE_TOOLS: StructuredToolInterface[] = [
   getDividends,
   getEarnings,
   searchAnnouncements,
+  getRbnzOcr,
 ];
 
 const FINANCE_TOOL_MAP = new Map(FINANCE_TOOLS.map(t => [t.name, t]));
@@ -118,6 +120,8 @@ Given a user's natural language query about NZX companies, call the appropriate 
    - Earnings results/guidance → get_earnings
    - News/announcements/filings → search_announcements
    - "why did X move" → get_stock_price + search_announcements
+   - RBNZ OCR / interest rates / risk-free rate → get_rbnz_ocr
+   - DCF / WACC / discount rate → get_rbnz_ocr + get_metrics_detail + get_governance_scores
    - Comprehensive analysis → get_company_detail(include='all') + get_metrics_detail + get_governance_scores
 
 3. **Efficiency**:

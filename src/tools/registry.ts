@@ -1,5 +1,6 @@
 import { StructuredToolInterface } from '@langchain/core/tools';
-import { createFinancialSearch, createFinancialMetrics } from './finance/index.js';
+import { createFinancialSearch, createFinancialMetrics, getRbnzOcr } from './finance/index.js';
+import { RBNZ_OCR_DESCRIPTION } from './finance/rbnz.js';
 import { exaSearch, perplexitySearch, tavilySearch, WEB_SEARCH_DESCRIPTION } from './search/index.js';
 import { skillTool, SKILL_TOOL_DESCRIPTION } from './skill.js';
 import { webFetchTool, WEB_FETCH_DESCRIPTION } from './fetch/web-fetch.js';
@@ -41,6 +42,11 @@ export function getToolRegistry(model: string): RegisteredTool[] {
       name: 'financial_metrics',
       tool: createFinancialMetrics(model),
       description: FINANCIAL_METRICS_DESCRIPTION,
+    },
+    {
+      name: 'get_rbnz_ocr',
+      tool: getRbnzOcr,
+      description: RBNZ_OCR_DESCRIPTION,
     },
     {
       name: 'web_fetch',

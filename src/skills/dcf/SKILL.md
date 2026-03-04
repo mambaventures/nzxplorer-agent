@@ -93,10 +93,15 @@ Calculate 5-year FCF CAGR from cash flow history.
 
 ## Step 3: Estimate Discount Rate (WACC)
 
+### 3.0 Get Current Risk-Free Rate
+**Query:** `"current RBNZ OCR rate"`
+
+**Tool:** `get_rbnz_ocr` — returns the live OCR rate. **ALWAYS call this tool** instead of using a hardcoded rate.
+
 **NZ-specific assumptions:**
-- Risk-free rate: **3.75%** (RBNZ OCR proxy — update if OCR changes)
+- Risk-free rate: **Use live OCR from get_rbnz_ocr** (do NOT hardcode — OCR changes ~7 times/year)
 - NZ equity risk premium: **5.5-6.5%** (higher than US due to smaller market, lower liquidity)
-- Cost of debt: 5-7% pre-tax (~3.5-5% after-tax at 28% NZ corporate tax rate)
+- Cost of debt: OCR + 2-3% pre-tax (after-tax at 28% NZ corporate tax rate)
 - NZ corporate tax rate: **28%**
 
 Calculate WACC using `debt_to_equity` from metrics for capital structure weights.

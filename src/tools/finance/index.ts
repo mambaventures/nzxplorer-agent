@@ -8,5 +8,6 @@ export { getDividends } from './dividends.js';
 export { getEarnings } from './earnings.js';
 export { getCompanies, getCompanyDetail } from './companies.js';
 export { getDirectors, getDirectorDetail } from './directors.js';
+export { getRbnzOcr } from './rbnz.js';
 export { createFinancialSearch } from './financial-search.js';
 export { createFinancialMetrics } from './financial-metrics.js';

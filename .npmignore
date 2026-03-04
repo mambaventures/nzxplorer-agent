@@ -1,0 +1,27 @@
+# Dev/build files
+.github/
+.dexter/
+.cursor/
+.vscode/
+.idea/
+coverage.json
+logs/
+.release-notes-*.md
+
+# Test files
+src/evals/
+**/*.test.ts
+
+# Env files
+.env
+.env.*
+
+# Git
+.git/
+.gitignore
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+venv/
+.venv/
