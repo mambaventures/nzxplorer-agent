@@ -1,58 +1,49 @@
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { z } from 'zod';
-import { callApi, stripFieldsDeep } from './api.js';
+import { callApi } from './api.js';
 import { formatToolResult } from '../types.js';
-
-const REDUNDANT_INSIDER_FIELDS = ['issuer'] as const;
 
 const InsiderTradesInputSchema = z.object({
   ticker: z
     .string()
-    .describe("The stock ticker symbol to fetch insider trades for. For example, 'AAPL' for Apple."),
+    .optional()
+    .describe("NZX ticker symbol to filter by (e.g. 'AIR', 'MEL'). If omitted, returns trades across all companies."),
+  type: z
+    .string()
+    .optional()
+    .describe("Transaction type filter: 'Buy', 'Sell', 'Exercise', etc."),
+  from: z
+    .string()
+    .optional()
+    .describe('Start date filter (YYYY-MM-DD).'),
+  to: z
+    .string()
+    .optional()
+    .describe('End date filter (YYYY-MM-DD).'),
+  director: z
+    .string()
+    .optional()
+    .describe("Filter by director slug (e.g. 'john-smith')."),
   limit: z
     .number()
-    .default(10)
-    .describe('Maximum number of insider trades to return (default: 10, max: 1000). Increase this for longer historical windows when needed.'),
-  filing_date: z
-    .string()
-    .optional()
-    .describe('Exact filing date to filter by (YYYY-MM-DD).'),
-  filing_date_gte: z
-    .string()
-    .optional()
-    .describe('Filter for trades with filing date greater than or equal to this date (YYYY-MM-DD).'),
-  filing_date_lte: z
-    .string()
-    .optional()
-    .describe('Filter for trades with filing date less than or equal to this date (YYYY-MM-DD).'),
-  filing_date_gt: z
-    .string()
-    .optional()
-    .describe('Filter for trades with filing date greater than this date (YYYY-MM-DD).'),
-  filing_date_lt: z
-    .string()
-    .optional()
-    .describe('Filter for trades with filing date less than this date (YYYY-MM-DD).'),
+    .default(20)
+    .describe('Maximum number of trades to return (default: 20, max: 500).'),
 });
 
 export const getInsiderTrades = new DynamicStructuredTool({
   name: 'get_insider_trades',
-  description: `Retrieves insider trading transactions for a given company ticker. Insider trades include purchases and sales of company stock by executives, directors, and other insiders. This data is sourced from SEC Form 4 filings. Use filing_date filters to narrow down results by date range.`,
+  description: `Retrieves insider share transactions (director trades) for NZX companies. Includes director name, transaction type (Buy/Sell/Exercise), shares traded, price per share, total value, and shares held after. Data sourced from NZX SHINTR (Significant Holder in Transaction) announcements. Use to assess insider conviction and sentiment.`,
   schema: InsiderTradesInputSchema,
   func: async (input) => {
     const params: Record<string, string | number | undefined> = {
-      ticker: input.ticker.toUpperCase(),
+      ticker: input.ticker?.trim().toUpperCase(),
+      type: input.type,
+      from: input.from,
+      to: input.to,
+      director: input.director,
       limit: input.limit,
-      filing_date: input.filing_date,
-      filing_date_gte: input.filing_date_gte,
-      filing_date_lte: input.filing_date_lte,
-      filing_date_gt: input.filing_date_gt,
-      filing_date_lt: input.filing_date_lt,
     };
-    const { data, url } = await callApi('/insider-trades/', params);
-    return formatToolResult(
-      stripFieldsDeep(data.insider_trades || [], REDUNDANT_INSIDER_FIELDS),
-      [url]
-    );
+    const { data, url } = await callApi('/api/v1/insider-trades', params);
+    return formatToolResult(data.data || data, [url]);
   },
 });

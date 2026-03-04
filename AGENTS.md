@@ -1,7 +1,7 @@
 # Repository Guidelines
 
-- Repo: https://github.com/virattt/dexter
-- Dexter is a CLI-based AI agent for deep financial research, built with TypeScript, Ink (React for CLI), and LangChain.
+- Forked from: https://github.com/virattt/dexter
+- NZXplorer Agent is a CLI-based AI agent for NZX (New Zealand Stock Exchange) research, built with TypeScript, Ink (React for CLI), and LangChain. It uses the NZXplorer API for all financial data.
 
 ## Project Structure
 
@@ -53,9 +53,8 @@
 
 ## Tools
 
-- `financial_search`: primary tool for all financial data queries (prices, metrics, filings). Delegates to multiple sub-tools internally.
-- `financial_metrics`: direct metric lookups (revenue, market cap, etc.).
-- `read_filings`: SEC filing reader for 10-K, 10-Q, 8-K documents.
+- `financial_search`: primary tool for all NZX data queries (companies, financials, governance, insider trades, dividends, earnings, announcements). Routes to 17 sub-tools internally.
+- `financial_metrics`: direct fundamental analysis (income, balance sheet, cash flow, 41 financial ratios).
 - `web_search`: general web search (Exa if `EXASEARCH_API_KEY` set, else Tavily if `TAVILY_API_KEY` set).
 - `browser`: Playwright-based web scraping for reading pages the agent discovers.
 - `skill`: invokes SKILL.md-defined workflows (e.g. DCF valuation). Each skill runs at most once per query.
@@ -80,7 +79,7 @@
 
 - LLM keys: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`, `XAI_API_KEY`, `OPENROUTER_API_KEY`
 - Ollama: `OLLAMA_BASE_URL` (default `http://127.0.0.1:11434`)
-- Finance: `FINANCIAL_DATASETS_API_KEY`
+- NZXplorer: `NZXPLORER_API_KEY`, `NZXPLORER_API_URL` (optional, defaults to https://nzxplorer.co.nz)
 - Search: `EXASEARCH_API_KEY` (preferred), `TAVILY_API_KEY` (fallback)
 - Tracing: `LANGSMITH_API_KEY`, `LANGSMITH_ENDPOINT`, `LANGSMITH_PROJECT`, `LANGSMITH_TRACING`
 - Never commit `.env` files or real API keys.

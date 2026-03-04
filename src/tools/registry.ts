@@ -1,5 +1,5 @@
 import { StructuredToolInterface } from '@langchain/core/tools';
-import { createFinancialSearch, createFinancialMetrics, createReadFilings } from './finance/index.js';
+import { createFinancialSearch, createFinancialMetrics } from './finance/index.js';
 import { exaSearch, perplexitySearch, tavilySearch, WEB_SEARCH_DESCRIPTION } from './search/index.js';
 import { skillTool, SKILL_TOOL_DESCRIPTION } from './skill.js';
 import { webFetchTool, WEB_FETCH_DESCRIPTION } from './fetch/web-fetch.js';
@@ -9,7 +9,6 @@ import { writeFileTool, WRITE_FILE_DESCRIPTION } from './filesystem/write-file.j
 import { editFileTool, EDIT_FILE_DESCRIPTION } from './filesystem/edit-file.js';
 import { FINANCIAL_SEARCH_DESCRIPTION } from './finance/financial-search.js';
 import { FINANCIAL_METRICS_DESCRIPTION } from './finance/financial-metrics.js';
-import { READ_FILINGS_DESCRIPTION } from './finance/read-filings.js';
 import { discoverSkills } from '../skills/index.js';
 
 /**
@@ -42,11 +41,6 @@ export function getToolRegistry(model: string): RegisteredTool[] {
       name: 'financial_metrics',
       tool: createFinancialMetrics(model),
       description: FINANCIAL_METRICS_DESCRIPTION,
-    },
-    {
-      name: 'read_filings',
-      tool: createReadFilings(model),
-      description: READ_FILINGS_DESCRIPTION,
     },
     {
       name: 'web_fetch',

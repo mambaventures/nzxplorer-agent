@@ -1,180 +1,148 @@
-# Dexter 🤖
+# NZXplorer Agent
 
-Dexter is an autonomous financial research agent that thinks, plans, and learns as it works. It performs analysis using task planning, self-reflection, and real-time market data. Think Claude Code, but built specifically for financial research.
+AI research assistant for the New Zealand Stock Exchange. Ask any question about NZX-listed companies and get a data-backed answer.
 
-<img width="1098" height="659" alt="Screenshot 2026-01-21 at 5 25 10 PM" src="https://github.com/user-attachments/assets/3bcc3a7f-b68a-4f5e-8735-9d22196ff76e" />
+Forked from [Dexter](https://github.com/virattt/dexter) by [@virattt](https://twitter.com/virattt).
 
-## Table of Contents
+## What It Does
 
-- [👋 Overview](#-overview)
-- [✅ Prerequisites](#-prerequisites)
-- [💻 How to Install](#-how-to-install)
-- [🚀 How to Run](#-how-to-run)
-- [📊 How to Evaluate](#-how-to-evaluate)
-- [🐛 How to Debug](#-how-to-debug)
-- [📱 How to Use with WhatsApp](#-how-to-use-with-whatsapp)
-- [🤝 How to Contribute](#-how-to-contribute)
-- [📄 License](#-license)
+The agent has access to the most comprehensive structured dataset on NZX-listed companies:
 
+| Data | Coverage |
+|------|----------|
+| Companies | 130 NZX issuers |
+| Financial statements | Income, balance sheet, cash flow (normalised, multi-year) |
+| Financial ratios | 41 metrics across 367 company-years |
+| Governance Risk Scores | 0-100, 6 components, all 130 companies |
+| Insider trades | 4,100+ director share transactions |
+| Dividends | 1,184 per-dividend records with imputation, DRP |
+| Earnings results | 389 extracted from PDFs, with guidance direction |
+| Announcements | 64,000+ full-text searchable (2017-present) |
+| Directors | 1,330+ with bios, board seats, compensation |
+| Stock prices | Daily OHLCV, updated automatically |
+| AGM resolutions | 1,662 resolutions, 37 failed, voting data |
+| Chairman speeches | 996 analysed with Language Intelligence Scores |
+| Annual reports | 338 report URLs, 308 extracted |
 
-## 👋 Overview
+## Example Queries
 
-Dexter takes complex financial questions and turns them into clear, step-by-step research plans. It runs those tasks using live market data, checks its own work, and refines the results until it has a confident, data-backed answer.  
-
-**Key Capabilities:**
-- **Intelligent Task Planning**: Automatically decomposes complex queries into structured research steps
-- **Autonomous Execution**: Selects and executes the right tools to gather financial data
-- **Self-Validation**: Checks its own work and iterates until tasks are complete
-- **Real-Time Financial Data**: Access to income statements, balance sheets, and cash flow statements
-- **Safety Features**: Built-in loop detection and step limits to prevent runaway execution
-
-[![Twitter Follow](https://img.shields.io/twitter/follow/virattt?style=social)](https://twitter.com/virattt) [![Discord](https://img.shields.io/badge/Discord-Join%20Server-5865F2?style=social&logo=discord)](https://discord.gg/jpGHv2XB6T)
-
-<img width="1042" height="638" alt="Screenshot 2026-02-18 at 12 21 25 PM" src="https://github.com/user-attachments/assets/2a6334f9-863f-4bd2-a56f-923e42f4711e" />
-
-
-## ✅ Prerequisites
-
-- [Bun](https://bun.com) runtime (v1.0 or higher)
-- OpenAI API key (get [here](https://platform.openai.com/api-keys))
-- Financial Datasets API key (get [here](https://financialdatasets.ai))
-- Exa API key (get [here](https://exa.ai)) - optional, for web search
-
-#### Installing Bun
-
-If you don't have Bun installed, you can install it using curl:
-
-**macOS/Linux:**
-```bash
-curl -fsSL https://bun.com/install | bash
+```
+"Should I buy Air New Zealand?"
+"Which NZX stocks have the safest dividends?"
+"Compare Spark vs Chorus vs Mercury"
+"What's the governance score for Fletcher Building?"
+"Show me insider buying in the last 3 months"
+"Build a DCF for Fisher & Paykel Healthcare"
+"What happened on the NZX this week?"
+"Which directors sit on the most boards?"
 ```
 
-**Windows:**
+## Prerequisites
+
+- Node.js 18+ or [Bun](https://bun.com) runtime
+- An LLM API key (Anthropic, OpenAI, Google, or others)
+- NZXplorer API key (get one at [nzxplorer.co.nz/developers](https://nzxplorer.co.nz/developers))
+- Web search API key (optional — Exa, Perplexity, or Tavily)
+
+## Install
+
 ```bash
-powershell -c "irm bun.sh/install.ps1|iex"
+git clone https://github.com/mambaventures/nzxplorer-agent.git
+cd nzxplorer-agent
+npm install    # or: bun install
 ```
 
-After installation, restart your terminal and verify Bun is installed:
-```bash
-bun --version
-```
+## Configure
 
-## 💻 How to Install
-
-1. Clone the repository:
 ```bash
-git clone https://github.com/virattt/dexter.git
-cd dexter
-```
-
-2. Install dependencies with Bun:
-```bash
-bun install
-```
-
-3. Set up your environment variables:
-```bash
-# Copy the example environment file
 cp env.example .env
-
-# Edit .env and add your API keys (if using cloud providers)
-# OPENAI_API_KEY=your-openai-api-key
-# ANTHROPIC_API_KEY=your-anthropic-api-key (optional)
-# GOOGLE_API_KEY=your-google-api-key (optional)
-# XAI_API_KEY=your-xai-api-key (optional)
-# OPENROUTER_API_KEY=your-openrouter-api-key (optional)
-
-# Institutional-grade market data for agents; AAPL, NVDA, MSFT are free
-# FINANCIAL_DATASETS_API_KEY=your-financial-datasets-api-key
-
-# (Optional) If using Ollama locally
-# OLLAMA_BASE_URL=http://127.0.0.1:11434
-
-# Web Search (Exa preferred, Tavily fallback)
-# EXASEARCH_API_KEY=your-exa-api-key
-# TAVILY_API_KEY=your-tavily-api-key
 ```
 
-## 🚀 How to Run
+Edit `.env` with your keys:
 
-Run Dexter in interactive mode:
 ```bash
-bun start
+# Required — NZXplorer API
+NZXPLORER_API_KEY=your-key
+
+# Required — at least one LLM provider
+ANTHROPIC_API_KEY=your-key    # recommended
+# OPENAI_API_KEY=your-key     # alternative
+# GOOGLE_API_KEY=your-key     # alternative
+
+# Optional — web search for non-NZX questions
+# EXASEARCH_API_KEY=your-key
 ```
 
-Or with watch mode for development:
+## Run
+
 ```bash
-bun dev
+npm start      # or: bun start
 ```
 
-## 📊 How to Evaluate
+Then ask a question.
 
-Dexter includes an evaluation suite that tests the agent against a dataset of financial questions. Evals use LangSmith for tracking and an LLM-as-judge approach for scoring correctness.
+## Tools
 
-**Run on all questions:**
-```bash
-bun run src/evals/run.ts
-```
+The agent has 17 NZX-specific data tools routed via two meta-tools:
 
-**Run on a random sample of data:**
-```bash
-bun run src/evals/run.ts --sample 10
-```
+### `financial_search` — routes to all data tools
+- `get_companies` / `get_company_detail` — company info, board, description
+- `get_directors` / `get_director_detail` — bios, board seats, compensation
+- `get_stock_price` — daily OHLCV price history
+- `get_financials` — income, balance sheet, cash flow (all-in-one)
+- `get_income_statements` / `get_balance_sheets` / `get_cash_flow_statements`
+- `get_all_financial_statements` — all three at once
+- `get_metrics_list` — screen/rank all companies by 41 ratios
+- `get_metrics_detail` — snapshot with live valuation, or historical
+- `get_governance_scores` — GRS v2, 6 components, 130 companies
+- `get_insider_trades` — director share transactions
+- `get_dividends` — per-dividend records with yield/payout
+- `get_earnings` — extracted results with guidance direction
+- `search_announcements` — full-text search across 64K+ announcements
 
-The eval runner displays a real-time UI showing progress, current question, and running accuracy statistics. Results are logged to LangSmith for analysis.
+### `financial_metrics` — focused fundamental analysis
+Routes to financial statements and ratio tools specifically.
 
-## 🐛 How to Debug
+### Other tools
+- `web_search` — general web search (Exa/Perplexity/Tavily)
+- `web_fetch` — fetch and read web pages
+- `browser` — Playwright-based scraping
+- `skill` — extensible workflows (e.g., DCF valuation)
 
-Dexter logs all tool calls to a scratchpad file for debugging and history tracking. Each query creates a new JSONL file in `.dexter/scratchpad/`.
+## Skills
 
-**Scratchpad location:**
-```
-.dexter/scratchpad/
-├── 2026-01-30-111400_9a8f10723f79.jsonl
-├── 2026-01-30-143022_a1b2c3d4e5f6.jsonl
-└── ...
-```
+Skills are SKILL.md-defined workflows the agent can invoke.
 
-Each file contains newline-delimited JSON entries tracking:
-- **init**: The original query
-- **tool_result**: Each tool call with arguments, raw result, and LLM summary
-- **thinking**: Agent reasoning steps
+### DCF Valuation (built-in)
+Triggered by: "fair value", "intrinsic value", "DCF", "what is X worth", "price target"
 
-**Example scratchpad entry:**
-```json
-{"type":"tool_result","timestamp":"2026-01-30T11:14:05.123Z","toolName":"get_income_statements","args":{"ticker":"AAPL","period":"annual","limit":5},"result":{...},"llmSummary":"Retrieved 5 years of Apple annual income statements showing revenue growth from $274B to $394B"}
-```
+NZ-adapted:
+- Risk-free rate: RBNZ OCR (3.75%)
+- NZ corporate tax rate: 28%
+- NZ equity risk premium: 5.5-6.5%
+- Governance risk premium from GRS score
+- NZ sector WACC ranges
+- Insider sentiment check
 
-This makes it easy to inspect exactly what data the agent gathered and how it interpreted results.
+## Architecture
 
-## 📱 How to Use with WhatsApp
+Forked from Dexter's agent loop:
+- Iterative tool-calling (max 10 iterations)
+- Context management with token threshold clearing
+- Multi-provider LLM support (Anthropic, OpenAI, Google, xAI, Ollama)
+- Streaming responses
+- All financial data from NZXplorer API with `?format=llm` for token efficiency
 
-Chat with Dexter through WhatsApp by linking your phone to the gateway. Messages you send to yourself are processed by Dexter and responses are sent back to the same chat.
+## Data Gaps (Known)
 
-**Quick start:**
-```bash
-# Link your WhatsApp account (scan QR code)
-bun run gateway:login
+| Feature | Status |
+|---------|--------|
+| Analyst estimates / price targets | No data — NZ has no public consensus service |
+| Revenue segments | Not normalised — exists in raw PDF extractions |
+| Real-time prices | Daily close only, not intraday |
+| Options / derivatives | Not covered |
+| ASX dual-listed detail | NZX data only |
 
-# Start the gateway
-bun run gateway
-```
+## License
 
-Then open WhatsApp, go to your own chat (message yourself), and ask Dexter a question.
-
-For detailed setup instructions, configuration options, and troubleshooting, see the [WhatsApp Gateway README](src/gateway/channels/whatsapp/README.md).
-
-## 🤝 How to Contribute
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
-
-**Important**: Please keep your pull requests small and focused.  This will make it easier to review and merge.
-
-
-## 📄 License
-
-This project is licensed under the MIT License.
+MIT (inherits from Dexter)

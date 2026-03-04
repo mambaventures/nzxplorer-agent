@@ -1,11 +1,11 @@
 {
-  "name": "dexter-ts",
-  "version": "2026.2.26",
-  "description": "Dexter - AI agent for deep financial research.",
+  "name": "nzxplorer-agent",
+  "version": "0.1.0",
+  "description": "NZXplorer Agent - AI research assistant for the New Zealand Stock Exchange.",
   "type": "module",
   "main": "src/index.tsx",
   "bin": {
-    "dexter-ts": "./src/index.tsx"
+    "nzxplorer-agent": "./src/index.tsx"
   },
   "scripts": {
     "start": "bun run src/index.tsx",
@@ -38,6 +38,9 @@
     "qrcode-terminal": "^0.12.0",
     "yahoo-finance2": "^3.13.0",
     "zod": "^4.1.13"
+  },
+  "overrides": {
+    "esbuild": "0.21.5"
   },
   "devDependencies": {
     "@babel/core": "^7.28.5",

@@ -1,7 +1,7 @@
 import { readCache, writeCache, describeRequest } from '../../utils/cache.js';
 import { logger } from '../../utils/logger.js';
 
-const BASE_URL = 'https://api.financialdatasets.ai';
+const BASE_URL = process.env.NZXPLORER_API_URL || 'https://nzxplorer.co.nz';
 
 export interface ApiResponse {
   data: Record<string, unknown>;
@@ -55,14 +55,16 @@ export async function callApi(
     }
   }
 
-  // Read API key lazily at call time (after dotenv has loaded)
-  const FINANCIAL_DATASETS_API_KEY = process.env.FINANCIAL_DATASETS_API_KEY;
+  const NZXPLORER_API_KEY = process.env.NZXPLORER_API_KEY;
 
-  if (!FINANCIAL_DATASETS_API_KEY) {
-    logger.warn(`[Financial Datasets API] call without key: ${label}`);
+  if (!NZXPLORER_API_KEY) {
+    logger.warn(`[NZXplorer API] call without key: ${label}`);
   }
 
   const url = new URL(`${BASE_URL}${endpoint}`);
+
+  // Always request LLM-optimized format for token efficiency
+  url.searchParams.append('format', 'llm');
 
   // Add params to URL, handling arrays
   for (const [key, value] of Object.entries(params)) {
@@ -79,32 +81,30 @@ export async function callApi(
   try {
     response = await fetch(url.toString(), {
       headers: {
-        'x-api-key': FINANCIAL_DATASETS_API_KEY || '',
+        'X-API-Key': NZXPLORER_API_KEY || '',
       },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    logger.error(`[Financial Datasets API] network error: ${label} — ${message}`);
-    throw new Error(`[Financial Datasets API] request failed for ${label}: ${message}`);
+    logger.error(`[NZXplorer API] network error: ${label} — ${message}`);
+    throw new Error(`[NZXplorer API] request failed for ${label}: ${message}`);
   }
 
   if (!response.ok) {
     const detail = `${response.status} ${response.statusText}`;
-    logger.error(`[Financial Datasets API] error: ${label} — ${detail}`);
-    throw new Error(`[Financial Datasets API] request failed: ${detail}`);
+    logger.error(`[NZXplorer API] error: ${label} — ${detail}`);
+    throw new Error(`[NZXplorer API] request failed: ${detail}`);
   }
 
   const data = await response.json().catch(() => {
     const detail = `invalid JSON (${response.status} ${response.statusText})`;
-    logger.error(`[Financial Datasets API] parse error: ${label} — ${detail}`);
-    throw new Error(`[Financial Datasets API] request failed: ${detail}`);
+    logger.error(`[NZXplorer API] parse error: ${label} — ${detail}`);
+    throw new Error(`[NZXplorer API] request failed: ${detail}`);
   });
 
-  // Persist for future requests when the caller marked the response as cacheable
   if (options?.cacheable) {
     writeCache(endpoint, params, data, url.toString());
   }
 
   return { data, url: url.toString() };
 }
-

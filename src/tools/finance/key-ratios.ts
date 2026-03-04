@@ -1,71 +1,79 @@
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { z } from 'zod';
-import { callApi, stripFieldsDeep } from './api.js';
+import { callApi } from './api.js';
 import { formatToolResult } from '../types.js';
 
-const REDUNDANT_FINANCIAL_FIELDS = ['accession_number', 'currency', 'period'] as const;
-
-const KeyRatiosInputSchema = z.object({
-  ticker: z
-    .string()
-    .describe(
-      "The stock ticker symbol to fetch key ratios for. For example, 'AAPL' for Apple."
-    ),
-  period: z
-    .enum(['annual', 'quarterly', 'ttm'])
-    .default('ttm')
-    .describe(
-      "The reporting period. 'annual' for yearly, 'quarterly' for quarterly, and 'ttm' for trailing twelve months."
-    ),
-  limit: z
-    .number()
-    .default(4)
-    .describe('The number of past financial statements to retrieve.'),
-  report_period: z
+const MetricsListInputSchema = z.object({
+  sector: z
     .string()
     .optional()
-    .describe('Filter for key ratios with an exact report period date (YYYY-MM-DD).'),
-  report_period_gt: z
+    .describe("Filter by NZX sector (e.g. 'Energy', 'Healthcare', 'Financial Services')."),
+  year: z
     .string()
     .optional()
-    .describe('Filter for key ratios with report periods after this date (YYYY-MM-DD).'),
-  report_period_gte: z
+    .describe("Single year (2024) or range (2020-2024)."),
+  sort: z
     .string()
     .optional()
     .describe(
-      'Filter for key ratios with report periods on or after this date (YYYY-MM-DD).'
+      "Sort by any metric: roe, net_margin, pe_ratio, dividend_yield, ev_to_ebitda, debt_to_equity, revenue_growth, etc. Default: fiscal_year."
     ),
-  report_period_lt: z
-    .string()
-    .optional()
-    .describe('Filter for key ratios with report periods before this date (YYYY-MM-DD).'),
-  report_period_lte: z
-    .string()
-    .optional()
-    .describe(
-      'Filter for key ratios with report periods on or before this date (YYYY-MM-DD).'
-    ),
+  order: z.enum(['asc', 'desc']).optional().describe("Sort order. Default: desc."),
+  latest: z
+    .boolean()
+    .default(true)
+    .describe("If true, returns only the latest year per company (leaderboard mode). Default: true."),
+  limit: z.number().default(50).describe("Max results (default: 50, max: 500)."),
 });
 
-export const getKeyRatios = new DynamicStructuredTool({
-  name: 'get_key_ratios',
-  description: `Retrieves historical key ratios for a company, such as P/E ratio, revenue per share, and enterprise value, over a specified period. Useful for trend analysis and historical performance evaluation.`,
-  schema: KeyRatiosInputSchema,
+export const getMetricsList = new DynamicStructuredTool({
+  name: 'get_metrics_list',
+  description: `Lists financial metrics across all NZX companies — 41 ratios including profitability (margins, ROE, ROIC), leverage (debt/equity), dividends (payout ratio, yield), growth (revenue, profit YoY), and valuation (P/E, P/B, EV/EBITDA). Great for screening, ranking, and sector comparisons.`,
+  schema: MetricsListInputSchema,
   func: async (input) => {
     const params: Record<string, string | number | undefined> = {
-      ticker: input.ticker,
-      period: input.period,
+      sector: input.sector,
+      year: input.year,
+      sort: input.sort,
+      order: input.order,
+      latest: input.latest ? 'true' : 'false',
       limit: input.limit,
-      report_period: input.report_period,
-      report_period_gt: input.report_period_gt,
-      report_period_gte: input.report_period_gte,
-      report_period_lt: input.report_period_lt,
-      report_period_lte: input.report_period_lte,
     };
-    const { data, url } = await callApi('/financial-metrics/', params);
-    return formatToolResult(
-      stripFieldsDeep(data.financial_metrics || [], REDUNDANT_FINANCIAL_FIELDS),
-      [url]
-    );
+    const { data, url } = await callApi('/api/v1/metrics', params);
+    return formatToolResult(data.data || data, [url]);
   },
 });
+
+const MetricsDetailInputSchema = z.object({
+  ticker: z
+    .string()
+    .describe("NZX ticker symbol (e.g. 'FPH' for Fisher & Paykel Healthcare)."),
+  mode: z
+    .enum(['snapshot', 'historical'])
+    .default('snapshot')
+    .describe(
+      "'snapshot' for latest metrics with live valuation (P/E, P/B recalculated from current price). 'historical' for all years."
+    ),
+  year: z
+    .string()
+    .optional()
+    .describe("Single year or range, only used with historical mode."),
+});
+
+export const getMetricsDetail = new DynamicStructuredTool({
+  name: 'get_metrics_detail',
+  description: `Gets detailed financial metrics for a single NZX company. Snapshot mode includes live valuation (P/E, P/B, dividend yield recalculated from current stock price) and price performance (1d, 1w, 1m, YTD, 1y returns, volatility, 52-week range). Historical mode returns all years of calculated ratios.`,
+  schema: MetricsDetailInputSchema,
+  func: async (input) => {
+    const ticker = input.ticker.trim().toUpperCase();
+    const params: Record<string, string | number | undefined> = {
+      mode: input.mode,
+      year: input.year,
+    };
+    const { data, url } = await callApi(`/api/v1/metrics/${ticker}`, params);
+    return formatToolResult(data.data || data, [url]);
+  },
+});
+
+// Keep legacy export name for compatibility with financial-search router
+export const getKeyRatios = getMetricsList;
